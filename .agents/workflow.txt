@@ -1,0 +1,107 @@
+FASE 1: Inicialización y Planeación Global 
+
+El objetivo aquí es transformar la idea del usuario en una estructura técnica y un listado de tareas medibles.
+
+    Requirement-Elicitation: Recibe el prompt del usuario y extrae requisitos (funcionales y no funcionales). Genera el documento SRS.
+
+    Risk-Assessment-Analyzer: Evalúa el SRS para identificar riesgos técnicos y de seguridad antes de diseñar.
+
+    Architecture-Viewpoint-Crafter: Con base en los requisitos y riesgos, define la arquitectura, paradigmas y patrones de diseño.
+
+    SOLID-Engine: Toma la arquitectura y crea la estructura base de carpetas y el árbol de directorios con principios SOLID.
+
+    SDD-Documenter: Redacta el Documento de Diseño de Software (SDD) dejando un registro inmutable de las decisiones tomadas.
+
+    Effort-Estimation-Engine: Estima el esfuerzo, tokens y complejidad de los requisitos descubiertos.
+
+    Product-Backlog-Groomer: Convierte el SRS y las estimaciones en Épicas e Historias de Usuario priorizadas, creando el BACKLOG.md.
+
+(A partir de aquí, el Agile-Sprint-Orchestrator inicia el Loop del Sprint para ir consumiendo el Backlog)
+
+    Sprint-Planner-Engine: Lee el Backlog y selecciona un subconjunto de tareas alcanzables para este Sprint específico.
+
+FASE 2: Diseño del Contexto del Sprint 
+
+Antes de escribir código, se prepara el entorno exacto que necesitarán las Historias de Usuario seleccionadas.
+
+    Dependency-Guardian: Descarga y audita (en busca de vulnerabilidades) las librerías necesarias para el Sprint actual.
+
+    State-Machine-Designer: Si el Sprint incluye lógicas complejas, diseña las máquinas de estado para evitar bugs futuros lógicos.
+
+    Secure-Schema-Modeler: Crea o actualiza los diagramas de base de datos y scripts de migración.
+
+    API-Contract-Designer: Diseña los contratos (Swagger/OpenAPI) de los nuevos endpoints del Sprint.
+
+    Traceability-Matrix-Linker: Verifica que cada nuevo endpoint y tabla corresponda a una historia del Sprint.
+
+    Definition-Of-Ready-Validator (DoR): Punto de Control. Verifica que los pasos 9 al 13 estén perfectos. Si algo falta, detiene el paso a la Fase 3; si todo está bien, da luz verde.
+
+FASE 3: Implementación 
+
+Aquí es donde ocurre la programación. Se divide en ejecución directa y bucles de auditoría en tiempo real.
+
+    Internationalization-I18n-Setup & Error-Handling-Standardizer: Establecen diccionarios de idiomas y formatos de error estándar antes de escribir las vistas o controladores.
+
+    UI-Crafter: Genera el Frontend accesible y responsivo.
+
+    Secure-Coder-Core & Concurrency-Safe-Coder: Escriben el Backend, asegurando protección OWASP y seguridad en transacciones e hilos.
+
+Bucle de Auditoría Interno (Real-Time):
+
+    Mientras se escribe el código, el Architectural-Security-Auditor (seguridad de diseño) y el SQA-Realtime-Monitor (calidad y complejidad) revisan la salida.
+
+    Si detectan problemas, invocan automáticamente al Refactor-And-Clean-Engine para arreglar el código sin romper la lógica.
+
+    TDD-Micro-Commiter: Al terminar cada historia de usuario limpia, hace un guardado y un commit atómico para no perder el progreso si la memoria del agente falla.
+
+FASE 4: Verificación
+
+Se valida que el código generado en la Fase 3 realmente funcione y no tenga vulnerabilidades.
+
+    Master-Test-Planner: Diseña el plan de pruebas para el Sprint.
+
+    Acceptance-Criteria-Tester: Verifica que las funcionalidades cumplan los Criterios de Aceptación (BDD).
+
+    Unit-Integrator-Tester: Ejecuta las pruebas unitarias y de integración.
+
+Bucle de Auto-Sanación (Auto-Healing Loop):
+
+    Si una prueba falla, el Test-Incident-Reporter crea un log detallado.
+
+    El Autonomous-Healer lee el log, parchea el código en la Fase 3 y vuelve a invocar al Unit-Integrator-Tester hasta obtener "Exit Code 0".
+
+    DAST-Security-Scanner: Ataca la aplicación levantada para buscar brechas de seguridad.
+
+    Load-And-Stress-Simulator: Bombardea los nuevos endpoints para asegurar el rendimiento.
+
+    Usability-Heuristic-Evaluator: Revisa la UI para asegurar accesibilidad y usabilidad humana.
+
+FASE 5: Despliegue y Retroalimentación
+
+Preparación del producto para ser entregado y aprendizaje para la siguiente iteración.
+
+    Configuration-Baseline-Manager: Limpia archivos temporales y establece una línea base sólida en Git.
+
+    SemVer-Calculator: Define la nueva versión (ej. de v1.0.0 a v1.1.0).
+
+    Compliance-Changelog-Builder: Actualiza el archivo CHANGELOG.md detallando los cambios exactos de este Sprint.
+
+    IaC-Container-Architect: Genera o actualiza Dockerfiles/Kubernetes basándose en las nuevas necesidades.
+
+    Rollback-Strategy-Planner: Genera los scripts de seguridad por si el pase a producción falla.
+
+    User-Manual-Synthesizer: Actualiza el README y manuales de usuario.
+
+    Release-Gatekeeper: Punto de Control Final. Valida que todo exista, esté sincronizado y empaqueta la versión.
+
+    Sprint-Retrospective-Analyzer: Analiza todos los problemas ocurridos durante el Sprint (ej. cuántas veces actuó el Autonomous-Healer). Redacta el archivo .retro.md.
+
+Fin del Ciclo y Reinicio
+
+El Agile-Sprint-Orchestrator (Fase 0):
+
+    Lee el .retro.md recién generado y actualiza el System Prompt (para ser más inteligente y no cometer los mismos errores).
+
+    Limpia su contexto/memoria para no saturarse.
+
+    Vuelve al paso 8 (Sprint-Planner-Engine) para iniciar un nuevo Sprint con las siguientes Historias de Usuario del Backlog, hasta que el proyecto esté 100% finalizado.
