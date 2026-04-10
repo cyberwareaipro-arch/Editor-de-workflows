@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Bot, Shield, Architecture, Layout, TestTube, CheckCircle } from 'lucide-react';
+import { Bot, Shield, Architecture, Layout, TestTube, CheckCircle, GitBranch } from 'lucide-react';
 
 const categoryIcons = {
   'Security': <Shield className="w-4 h-4 text-purple-400" />,
@@ -13,8 +13,8 @@ const categoryIcons = {
 };
 
 export default function Sidebar({ agents }) {
-  const onDragStart = (event, agent) => {
-    event.dataTransfer.setData('application/reactflow', 'skillNode');
+  const onDragStart = (event, agent, specificType = 'skillNode') => {
+    event.dataTransfer.setData('application/reactflow', specificType);
     event.dataTransfer.setData('application/agent-data', JSON.stringify(agent));
     event.dataTransfer.effectAllowed = 'move';
   };
@@ -37,6 +37,28 @@ export default function Sidebar({ agents }) {
       </div>
 
       <div className="p-4 flex flex-col gap-6">
+        {/* Structural Nodes Static Group */}
+        <div>
+          <div className="flex items-center gap-2 mb-3 px-2">
+            <GitBranch className="w-4 h-4 text-amber-400" />
+            <h2 className="text-sm tracking-widest uppercase font-semibold text-gray-300">Logic & Rules</h2>
+          </div>
+          <div className="flex flex-col gap-2">
+              <div
+                  draggable
+                  onDragStart={(e) => onDragStart(e, { id: 'structural-if-else', name: 'If / Else Condition', category: 'Logic' }, 'conditionNode')}
+                  className="p-3 rounded-lg bg-[#ffffff08] border border-amber-500/30 hover:bg-[#ffffff15] hover:border-amber-400/50 cursor-grab active:cursor-grabbing transition-all duration-200 group"
+                >
+                  <h3 className="text-sm font-medium text-gray-100 group-hover:text-amber-300 transition-colors">
+                    If / Else Condition
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                    Routes flow based on a simulated logical condition boolean.
+                  </p>
+              </div>
+          </div>
+        </div>
+
         {Object.entries(groupedAgents).map(([category, items]) => (
           <div key={category}>
             <div className="flex items-center gap-2 mb-3 px-2">

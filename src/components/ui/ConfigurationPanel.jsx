@@ -3,7 +3,7 @@ import React from 'react';
 import { useGraphStore } from '@/stores/useGraphStore';
 
 export default function ConfigurationPanel() {
-  const { selectedNodeId, nodes, updateNodeData, deleteNode, setSelectedNodeId } = useGraphStore();
+  const { selectedNodeId, nodes, updateNodeData, deleteNode, setSelectedNodeId, mode } = useGraphStore();
 
   if (!selectedNodeId) return null;
 
@@ -38,27 +38,46 @@ export default function ConfigurationPanel() {
           </div>
         )}
 
-        <div className="flex flex-col gap-2">
-          <label className="text-xs font-semibold tracking-wide text-gray-300">CUSTOM PROMPT (Optional)</label>
-          <textarea
-            value={customPrompt}
-            onChange={(e) => updateNodeData(node.id, { customPrompt: e.target.value })}
-            placeholder="Instruct this agent for this specific node..."
-            className="w-full h-32 bg-[#ffffff0a] border border-[#ffffff15] rounded-lg p-3 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 resize-none transition-all"
-          />
-        </div>
-
-        <div className="mt-8">
-           <button 
-             className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-sm font-semibold transition"
-             onClick={() => {
-                deleteNode(node.id);
-                setSelectedNodeId(null);
-             }}
-           >
-             Delete Node
-           </button>
-        </div>
+        {mode === 'design' ? (
+          <>
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold tracking-wide text-gray-300">CUSTOM PROMPT (Optional)</label>
+              <textarea
+                value={customPrompt}
+                onChange={(e) => updateNodeData(node.id, { customPrompt: e.target.value })}
+                placeholder="Instruct this agent for this specific node..."
+                className="w-full h-32 bg-[#ffffff0a] border border-[#ffffff15] rounded-lg p-3 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/50 resize-none transition-all"
+              />
+            </div>
+            <div className="mt-8">
+              <button 
+                className="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-sm font-semibold transition"
+                onClick={() => {
+                    deleteNode(node.id);
+                    setSelectedNodeId(null);
+                }}
+              >
+                Delete Node
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col gap-4 mt-4">
+            <div className="bg-[#1a1c23] p-3 rounded border border-blue-500/30">
+               <h4 className="text-xs font-bold text-blue-400 uppercase tracking-widest mb-2">Simulated Trace Output</h4>
+               <p className="text-sm font-mono text-gray-300 whitespace-pre-wrap break-words">
+                 {node.data?.simulatedOutput || "// No execution trace found yet."}
+               </p>
+            </div>
+            
+            <button 
+              className="w-full py-2 mt-4 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/30 rounded-lg text-sm font-semibold transition"
+              onClick={() => updateNodeData(node.id, { simulatedOutput: `Output Data generated at ${new Date().toLocaleTimeString()}\n{ success: true, agent: "${agent?.name}" }` })}
+            >
+              Simulate Execution
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   );

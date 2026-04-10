@@ -8,7 +8,9 @@ export const useGraphStore = create(
       nodes: [],
       edges: [],
       selectedNodeId: null,
+      mode: 'design', // 'design' o 'trace'
       setSelectedNodeId: (id) => set({ selectedNodeId: id }),
+      setMode: (mode) => set({ mode }),
       
       onNodesChange: (changes) => {
         set({

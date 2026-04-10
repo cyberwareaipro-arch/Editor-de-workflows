@@ -11,10 +11,12 @@ import 'reactflow/dist/style.css';
 import { useGraphStore } from '@/stores/useGraphStore';
 import SkillNode from './SkillNode';
 import MacroWorkflowNode from './MacroWorkflowNode';
+import ConditionNode from './ConditionNode';
 
 const nodeTypes = { 
   skillNode: SkillNode,
-  macroNode: MacroWorkflowNode
+  macroNode: MacroWorkflowNode,
+  conditionNode: ConditionNode
 };
 
 export default function GraphCanvas() {
