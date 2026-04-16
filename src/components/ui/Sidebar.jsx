@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Bot, Shield, Architecture, Layout, TestTube, CheckCircle, GitBranch } from 'lucide-react';
+import { Bot, Shield, Architecture, Layout, TestTube, CheckCircle, GitBranch, Rocket } from 'lucide-react';
 
 const categoryIcons = {
   'Security': <Shield className="w-4 h-4 text-purple-400" />,
@@ -9,6 +9,7 @@ const categoryIcons = {
   'Planning': <CheckCircle className="w-4 h-4 text-emerald-400" />,
   'Implementation': <Bot className="w-4 h-4 text-blue-400" />,
   'Testing & QA': <TestTube className="w-4 h-4 text-pink-400" />,
+  'Deployment': <Rocket className="w-4 h-4 text-orange-400" />,
   'Other': <Bot className="w-4 h-4 text-gray-400" />
 };
 

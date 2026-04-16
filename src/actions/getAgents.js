@@ -21,14 +21,18 @@ export async function getAgents() {
       
       const { data, content } = matter(fileContent);
       
-      // Determine category based on filename or content keywords as a simple heuristic
-      let category = 'Other';
-      const lowercaseName = (data.name || file).toLowerCase();
-      if (lowercaseName.includes('test') || lowercaseName.includes('qa')) category = 'Testing & QA';
-      else if (lowercaseName.includes('secur') || lowercaseName.includes('guard')) category = 'Security';
-      else if (lowercaseName.includes('architect') || lowercaseName.includes('design')) category = 'Architecture & Design';
-      else if (lowercaseName.includes('plan') || lowercaseName.includes('requirement')) category = 'Planning';
-      else if (lowercaseName.includes('code') || lowercaseName.includes('ui')) category = 'Implementation';
+      // Determine category based on frontmatter or filename as a simple heuristic
+      let category = data.category || 'Other';
+      
+      if (!data.category) {
+        const lowercaseName = (data.name || file).toLowerCase();
+        if (lowercaseName.includes('test') || lowercaseName.includes('qa')) category = 'Testing & QA';
+        else if (lowercaseName.includes('secur') || lowercaseName.includes('guard')) category = 'Security';
+        else if (lowercaseName.includes('architect') || lowercaseName.includes('design')) category = 'Architecture & Design';
+        else if (lowercaseName.includes('plan') || lowercaseName.includes('requirement')) category = 'Planning';
+        else if (lowercaseName.includes('code') || lowercaseName.includes('ui')) category = 'Implementation';
+        else if (lowercaseName.includes('publish') || lowercaseName.includes('deploy') || lowercaseName.includes('uploader') || lowercaseName.includes('google-play') || lowercaseName.includes('release')) category = 'Deployment';
+      }
 
       agents.push({
         id: file.replace('.md', ''),
