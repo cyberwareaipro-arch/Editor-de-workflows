@@ -1,6 +1,53 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { addEdge, applyNodeChanges, applyEdgeChanges } from 'reactflow';
+
+const hybridStorage = {
+  getItem: async (name) => {
+    // Cuando estemos en Render u otro ambiente server de prod que decida el usuario
+    if (process.env.NEXT_PUBLIC_RENDER_ENV === 'true') {
+      try {
+        const res = await fetch(`/api/workflow?key=${name}`);
+        if (res.ok) {
+          const data = await res.json();
+          return data.value;
+        }
+      } catch (err) {
+        console.error('Failed to fetch from MongoDB via API', err);
+      }
+      return null;
+    } else {
+      // Local development
+      return localStorage.getItem(name);
+    }
+  },
+  setItem: async (name, value) => {
+    if (process.env.NEXT_PUBLIC_RENDER_ENV === 'true') {
+      try {
+        await fetch('/api/workflow', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: name, value }),
+        });
+      } catch (err) {
+        console.error('Failed to save to MongoDB via API', err);
+      }
+    } else {
+      localStorage.setItem(name, value);
+    }
+  },
+  removeItem: async (name) => {
+    if (process.env.NEXT_PUBLIC_RENDER_ENV === 'true') {
+      try {
+        await fetch(`/api/workflow?key=${name}`, { method: 'DELETE' });
+      } catch (err) {
+        console.error('Failed to delete from MongoDB via API', err);
+      }
+    } else {
+      localStorage.removeItem(name);
+    }
+  },
+};
 
 export const useGraphStore = create(
   persist(
@@ -56,6 +103,7 @@ export const useGraphStore = create(
     }),
     {
       name: 'visual-editor-graph-storage',
+      storage: createJSONStorage(() => hybridStorage),
     }
   )
 );
