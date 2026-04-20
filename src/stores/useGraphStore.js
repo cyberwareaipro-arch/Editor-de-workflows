@@ -58,9 +58,11 @@ export const useGraphStore = create(
       mode: 'design', // 'design' o 'trace'
       isChatOpen: false,
       chatMessages: [],
+      isAntigravityConnected: false,
       setSelectedNodeId: (id) => set({ selectedNodeId: id }),
       setMode: (mode) => set({ mode }),
       setChatOpen: (isOpen) => set({ isChatOpen: isOpen }),
+      setAntigravityConnected: (isConnected) => set({ isAntigravityConnected: isConnected }),
       addChatMessage: (msg) => set({ chatMessages: [...get().chatMessages, msg] }),
       clearChat: () => set({ chatMessages: [] }),
       

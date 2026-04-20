@@ -102,6 +102,43 @@ export default function ChatPanel() {
 
       {/* Input */}
       <div className="p-3 border-t border-[#ffffff15] bg-[#ffffff02]">
+        <div className="flex justify-between items-center mb-2 px-1">
+           <button 
+             onClick={async () => {
+                if (loading) return;
+                const userMessage = { role: 'user', content: 'Por favor analiza mi workflow actual.' };
+                addChatMessage(userMessage);
+                setLoading(true);
+                try {
+                  const compileRes = await compileWorkflow(nodes, edges);
+                  const workflowContext = compileRes.success ? compileRes.md : 'No workflow compiled';
+                  
+                  const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      prompt: userMessage.content,
+                      workflow: workflowContext,
+                      history: chatMessages.map(m => ({ role: m.role, parts: [{ text: m.content }] }))
+                    })
+                  });
+
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error || 'Failed to fetch response');
+                  addChatMessage({ role: 'assistant', content: data.text });
+                } catch (error) {
+                  addChatMessage({ role: 'assistant', content: `Error: ${error.message}` });
+                } finally {
+                  setLoading(false);
+                }
+             }}
+             disabled={loading || !nodes || nodes.length === 0}
+             className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50 disabled:hover:text-blue-400"
+           >
+             <Bot className="w-3 h-3" />
+             Enviar Workflow al Chat
+           </button>
+        </div>
         <div className="relative">
           <textarea
              value={input}
