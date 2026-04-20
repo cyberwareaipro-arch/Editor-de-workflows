@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { useGraphStore } from '@/stores/useGraphStore';
-import { Download, PlayCircle, Bot } from 'lucide-react';
+import { Download, PlayCircle, Bot, Sparkles } from 'lucide-react';
 import { compileWorkflow } from '@/actions/compileWorkflow';
 
 export default function ExportToolbar() {
@@ -25,6 +25,37 @@ export default function ExportToolbar() {
       }
     } catch (e) {
       alert("System error compiling script.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCopyToAntigravity = async () => {
+    setLoading(true);
+    try {
+      const response = await compileWorkflow(nodes, edges);
+      let md = response.success ? response.md : "Workflow is empty or invalid.";
+      
+      const rawStructure = {
+        nodes: nodes.map(n => ({ id: n.id, type: n.type, data: { agent: n.data.agent?.name, customPrompt: n.data.customPrompt } })),
+        edges: edges.map(e => ({ id: e.id, source: e.source, target: e.target }))
+      };
+
+      const contextText = `# Contexto del Workflow para Antigravity\n\nAquí está el resumen del flujo actual:\n\n${md}\n\n## Estructura RAW:\n\`\`\`json\n${JSON.stringify(rawStructure, null, 2)}\n\`\`\`\n\nPor favor analiza este workflow para lo que te voy a pedir a continuación...`;
+
+      // Copiar al portapapeles
+      await navigator.clipboard.writeText(contextText);
+      
+      // Enviar a la API local
+      await fetch('/api/antigravity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context: contextText }),
+      });
+
+      alert("¡Contexto copiado al portapapeles y guardado localmente para que Antigravity lo vea!");
+    } catch (e) {
+      alert("Error linking with Antigravity: " + e.message);
     } finally {
       setLoading(false);
     }
@@ -56,6 +87,15 @@ export default function ExportToolbar() {
       >
         <Download className="w-4 h-4" />
         {loading ? 'Compiling...' : 'Compile'}
+      </button>
+
+      <button 
+        onClick={handleCopyToAntigravity}
+        disabled={loading}
+        className="flex items-center gap-2 px-4 py-1.5 bg-purple-600 hover:bg-purple-500 shadow-lg shadow-purple-500/20 text-white rounded-lg font-semibold text-sm transition-all disabled:opacity-50"
+      >
+        <Sparkles className="w-4 h-4" />
+        {loading ? '...' : 'Antigravity'}
       </button>
 
       <button 
