@@ -1,11 +1,11 @@
 'use client';
 import React, { useState } from 'react';
 import { useGraphStore } from '@/stores/useGraphStore';
-import { Download, PlayCircle } from 'lucide-react';
+import { Download, PlayCircle, Bot } from 'lucide-react';
 import { compileWorkflow } from '@/actions/compileWorkflow';
 
 export default function ExportToolbar() {
-  const { nodes, edges, mode, setMode } = useGraphStore();
+  const { nodes, edges, mode, setMode, isChatOpen, setChatOpen } = useGraphStore();
   const [loading, setLoading] = useState(false);
 
   const handleCompile = async () => {
@@ -55,7 +55,15 @@ export default function ExportToolbar() {
         className="flex items-center gap-2 px-4 py-1.5 bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/20 text-white rounded-lg font-semibold text-sm transition-all disabled:opacity-50"
       >
         <Download className="w-4 h-4" />
-        {loading ? 'Compiling...' : 'Compile to .MD'}
+        {loading ? 'Compiling...' : 'Compile'}
+      </button>
+
+      <button 
+        onClick={() => setChatOpen(!isChatOpen)}
+        className={`flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold text-sm transition-all shadow-lg ${isChatOpen ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20 text-white' : 'bg-[#ffffff10] hover:bg-[#ffffff20] text-gray-300'}`}
+      >
+        <Bot className="w-4 h-4" />
+        Chat
       </button>
     </div>
   );

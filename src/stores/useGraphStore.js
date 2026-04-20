@@ -56,8 +56,13 @@ export const useGraphStore = create(
       edges: [],
       selectedNodeId: null,
       mode: 'design', // 'design' o 'trace'
+      isChatOpen: false,
+      chatMessages: [],
       setSelectedNodeId: (id) => set({ selectedNodeId: id }),
       setMode: (mode) => set({ mode }),
+      setChatOpen: (isOpen) => set({ isChatOpen: isOpen }),
+      addChatMessage: (msg) => set({ chatMessages: [...get().chatMessages, msg] }),
+      clearChat: () => set({ chatMessages: [] }),
       
       onNodesChange: (changes) => {
         set({

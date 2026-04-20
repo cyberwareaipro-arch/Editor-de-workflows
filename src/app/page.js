@@ -3,6 +3,7 @@ import Sidebar from '@/components/ui/Sidebar';
 import GraphCanvas from '@/components/canvas/GraphCanvas';
 import ConfigurationPanel from '@/components/ui/ConfigurationPanel';
 import ExportToolbar from '@/components/ui/ExportToolbar';
+import ChatPanel from '@/components/ui/ChatPanel';
 
 export default async function Home() {
   const agents = await getAgents();
@@ -13,6 +14,7 @@ export default async function Home() {
       <GraphCanvas />
       <ExportToolbar />
       <ConfigurationPanel />
+      <ChatPanel />
     </main>
   );
 }
