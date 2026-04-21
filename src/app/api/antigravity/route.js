@@ -20,7 +20,14 @@ export async function POST(request) {
 
     if (Nombre && ContentBase64) {
       const extension = Extensión || '';
-      const safePath = (RutaAGuardar || '').replace(/^[\/\\]+/, '');
+      
+      // Limpiamos la ruta ingresada. Si el usuario puso "public/algo", le quitamos "public/" 
+      // para evitar que se guarde en public/public/algo y cause 404.
+      let safePath = (RutaAGuardar || '').replace(/^[\/\\]+/, '');
+      if (safePath.toLowerCase().startsWith('public')) {
+        safePath = safePath.substring(6).replace(/^[\/\\]+/, '');
+      }
+
       const publicDir = path.join(process.cwd(), 'public');
       const targetPath = path.join(publicDir, safePath);
 
@@ -34,9 +41,13 @@ export async function POST(request) {
       const fileBuffer = Buffer.from(ContentBase64, 'base64');
       fs.writeFileSync(fullFilePath, fileBuffer);
 
-      const publicUrl = `/${safePath ? safePath.replace(/\\/g, '/') + '/' : ''}${Nombre}${ext}`;
+      // Utilizamos nuestra ruta dinámica asegurada /api/public/ para evitar problemas de caché 
+      // del build en servidores como Render y garantizar que Next.js siempre detecte/sirva el archivo nuevo en disco.
+      const encodedUrlPath = `${safePath ? safePath.replace(/\\/g, '/') + '/' : ''}${Nombre}${ext}`;
+      const publicUrl = `/api/public/${encodedUrlPath}`;
 
       return NextResponse.json({ 
+
         success: true, 
         message: 'File generated successfully',
         filePath: fullFilePath,
