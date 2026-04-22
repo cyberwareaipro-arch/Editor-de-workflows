@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { X, ExternalLink, AppWindow, Loader2 } from 'lucide-react';
+import { X, ExternalLink, AppWindow, Loader2, Trash2 } from 'lucide-react';
 
 export default function AppGallery({ isOpen, onClose }) {
   const [apps, setApps] = useState([]);
@@ -24,6 +24,25 @@ export default function AppGallery({ isOpen, onClose }) {
       console.error('Error fetching apps:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (window.confirm('¿Estás seguro de que quieres eliminar esta aplicación? Esto no se puede deshacer y se borrará para todos los usuarios.')) {
+      try {
+        const res = await fetch(`/api/apps/${id}`, {
+          method: 'DELETE',
+        });
+        if (res.ok) {
+          fetchApps();
+        } else {
+          console.error('Error deleting app');
+          alert('Hubo un error al intentar eliminar la aplicación.');
+        }
+      } catch (error) {
+        console.error('Error deleting app:', error);
+        alert('Hubo un error al intentar eliminar la aplicación.');
+      }
     }
   };
 
@@ -64,6 +83,13 @@ export default function AppGallery({ isOpen, onClose }) {
                         {new Date(app.createdAt).toLocaleString()}
                       </p>
                     </div>
+                    <button 
+                      onClick={() => handleDelete(app._id)}
+                      className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-400/10 rounded-md transition-colors"
+                      title="Eliminar aplicación"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                   <div className="mt-auto pt-2">
                     <a 

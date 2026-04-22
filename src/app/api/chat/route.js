@@ -34,12 +34,12 @@ Here is the current workflow (compiled to Markdown):
 ${workflow}
 \`\`\`
 
-IMPORTANT: Si el usuario te pide explícitamente crear una aplicación, página web, o código (HTML/CSS/JS), DEBES responder obligatoriamente con un único bloque JSON que siga exactamente esta estructura, codificando el contenido del código (todo integrado en un único archivo) en base64:
+IMPORTANT: Si el usuario te pide explícitamente crear una aplicación, página web, o código (HTML/CSS/JS), DEBES responder obligatoriamente con un único bloque JSON que siga exactamente esta estructura, escribiendo el código directamente como string en "Content" (escapando comillas dobles y saltos de línea si es necesario):
 \`\`\`json
 {
   "Nombre": "nombre_de_la_app",
   "Extensión": ".html",
-  "ContentBase64": "...",
+  "Content": "<html>...</html>",
   "Ruta a guardar": "vistas"
 }
 \`\`\`
@@ -64,13 +64,13 @@ ${prompt}
     let responseText = result.response.text();
 
     // Check if response contains a JSON block with the specified format
-    const jsonMatch = responseText.match(/```json\s*(\{[\s\S]*?"Nombre"[\s\S]*?"ContentBase64"[\s\S]*?\})\s*```/);
+    const jsonMatch = responseText.match(/```json\s*(\{[\s\S]*?"Nombre"[\s\S]*?"Content"[\s\S]*?\})\s*```/);
     if (jsonMatch) {
       try {
         const parsedJson = JSON.parse(jsonMatch[1]);
-        const { Nombre, Extensión, ContentBase64, "Ruta a guardar": RutaAGuardar } = parsedJson;
+        const { Nombre, Extensión, Content, "Ruta a guardar": RutaAGuardar } = parsedJson;
 
-        if (Nombre && ContentBase64) {
+        if (Nombre && Content) {
           // Limpiar ruta
           let safePath = (RutaAGuardar || 'vistas').replace(/^[\/\\]+/, '');
           if (safePath.toLowerCase().startsWith('public')) {
@@ -87,18 +87,21 @@ ${prompt}
           const ext = Extensión && Extensión.startsWith('.') ? Extensión : (Extensión ? `.${Extensión}` : '.html');
           const fullFilePath = path.join(targetPath, `${Nombre}${ext}`);
 
-          const fileBuffer = Buffer.from(ContentBase64, 'base64');
-          fs.writeFileSync(fullFilePath, fileBuffer);
+          // Escribir archivo directamente como utf8 para preservar tildes y caracteres especiales
+          fs.writeFileSync(fullFilePath, Content, 'utf8');
 
           const encodedUrlPath = `${safePath ? safePath.replace(/\\/g, '/') + '/' : ''}${Nombre}${ext}`;
           const publicUrl = `/api/public/${encodedUrlPath}`;
+
+          // Codificar a base64 nosotros mismos para guardarlo en la DB
+          const contentBase64 = Buffer.from(Content, 'utf8').toString('base64');
 
           // Guardar en MongoDB
           await dbConnect();
           await AppFile.create({
             nombre: Nombre,
             extension: ext,
-            contentBase64: ContentBase64,
+            contentBase64: contentBase64,
             rutaAGuardar: safePath,
             publicUrl: publicUrl
           });
