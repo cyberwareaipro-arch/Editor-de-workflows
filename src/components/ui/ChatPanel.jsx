@@ -1,15 +1,13 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { useGraphStore } from '@/stores/useGraphStore';
-import { Bot, Send, User, X, Loader2, Trash2, AppWindow } from 'lucide-react';
+import { Bot, Send, User, X, Loader2, Trash2 } from 'lucide-react';
 import { compileWorkflow } from '@/actions/compileWorkflow';
-import AppGallery from './AppGallery';
 
 export default function ChatPanel() {
   const { isChatOpen, setChatOpen, chatMessages, addChatMessage, clearChat, nodes, edges } = useGraphStore();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isGalleryOpen, setGalleryOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -62,9 +60,6 @@ export default function ChatPanel() {
           <h3 className="text-sm font-bold text-gray-200">Gemini Assistant</h3>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => setGalleryOpen(true)} className="text-gray-500 hover:text-blue-400 transition-colors" title="Ver Apps Generadas">
-            <AppWindow className="w-4 h-4" />
-          </button>
           <button onClick={clearChat} className="text-gray-500 hover:text-red-400 transition-colors" title="Clear chat">
             <Trash2 className="w-4 h-4" />
           </button>
@@ -167,8 +162,6 @@ export default function ChatPanel() {
           </button>
         </div>
       </div>
-
-      <AppGallery isOpen={isGalleryOpen} onClose={() => setGalleryOpen(false)} />
     </div>
   );
 }

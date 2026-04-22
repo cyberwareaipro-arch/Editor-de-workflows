@@ -1,14 +1,16 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { useGraphStore } from '@/stores/useGraphStore';
-import { Download, PlayCircle, Bot, Sparkles, FileJson, X, Code2 } from 'lucide-react';
+import { Download, PlayCircle, Bot, Sparkles, FileJson, X, Code2, AppWindow } from 'lucide-react';
 import { compileWorkflow } from '@/actions/compileWorkflow';
 import AntigravityClient from '@/lib/antigravity';
+import AppGallery from './AppGallery';
 
 export default function ExportToolbar() {
   const { nodes, edges, mode, setMode, isChatOpen, setChatOpen, isAntigravityConnected, setAntigravityConnected } = useGraphStore();
   const [loading, setLoading] = useState(false);
   const [showJsonModal, setShowJsonModal] = useState(false);
+  const [isGalleryOpen, setGalleryOpen] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
 
   const syncTimeoutRef = useRef(null);
@@ -172,6 +174,14 @@ export default function ExportToolbar() {
         <div className="w-px h-6 bg-[#ffffff20]"></div>
 
         <button 
+          onClick={() => setGalleryOpen(true)}
+          className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold text-sm transition-all shadow-lg bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-400"
+        >
+          <AppWindow className="w-4 h-4" />
+          Galería de Apps
+        </button>
+
+        <button 
           onClick={() => setChatOpen(!isChatOpen)}
           className={`flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold text-sm transition-all shadow-lg ${isChatOpen ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20 text-white' : 'bg-[#ffffff10] hover:bg-[#ffffff20] text-gray-300'}`}
         >
@@ -233,6 +243,8 @@ export default function ExportToolbar() {
           </div>
         </div>
       )}
+
+      <AppGallery isOpen={isGalleryOpen} onClose={() => setGalleryOpen(false)} />
     </>
   );
 }

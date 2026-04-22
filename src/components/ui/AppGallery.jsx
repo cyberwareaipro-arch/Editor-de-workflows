@@ -30,8 +30,8 @@ export default function AppGallery({ isOpen, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-      <div className="bg-[#0f1115] border border-[#ffffff15] rounded-xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="bg-[#0f1115] border border-[#ffffff15] rounded-xl w-full max-w-5xl shadow-2xl overflow-hidden flex flex-col h-[85vh]">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[#ffffff15] bg-[#ffffff05]">
           <div className="flex items-center gap-2">
@@ -54,9 +54,9 @@ export default function AppGallery({ isOpen, onClose }) {
               No hay aplicaciones generadas todavía. ¡Pídele a Gemini que cree una!
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {apps.map((app) => (
-                <div key={app._id} className="bg-[#ffffff08] border border-[#ffffff10] rounded-lg p-4 hover:border-blue-500/30 transition-colors flex flex-col gap-3">
+                <div key={app._id} className="bg-[#ffffff08] border border-[#ffffff10] rounded-xl p-5 hover:border-blue-500/40 hover:bg-[#ffffff0c] transition-all flex flex-col gap-4 shadow-sm hover:shadow-md">
                   <div className="flex items-start justify-between">
                     <div>
                       <h3 className="font-semibold text-gray-200 break-all">{app.nombre}{app.extension}</h3>
