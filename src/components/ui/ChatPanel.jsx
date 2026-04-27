@@ -1,14 +1,14 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { useGraphStore } from '@/stores/useGraphStore';
-import { Bot, Send, User, X, Loader2, Trash2 } from 'lucide-react';
+import { Bot, Send, User, X, Loader2, Trash2, FileJson } from 'lucide-react';
 import { compileWorkflow } from '@/actions/compileWorkflow';
 
 export default function ChatPanel() {
-  const { isChatOpen, setChatOpen, chatMessages, addChatMessage, clearChat, nodes, edges } = useGraphStore();
+  const { isChatOpen, setChatOpen, chatMessages, addChatMessage, clearChat, nodes, edges, savedWorkflows } = useGraphStore();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const messagesEndRef = useRef(null);
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState('current');  const messagesEndRef = useRef(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -82,6 +82,12 @@ export default function ChatPanel() {
                 {msg.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
               </div>
               <div className={`p-3 rounded-lg text-sm whitespace-pre-wrap ${msg.role === 'user' ? 'bg-blue-500/10 text-blue-100 border border-blue-500/20' : 'bg-[#ffffff08] text-gray-300 border border-[#ffffff10]'}`}>
+                {msg.attachedFile && (
+                  <div className="flex items-center gap-2 mb-2 p-2 bg-black/20 rounded border border-blue-500/30 text-blue-300">
+                    <FileJson className="w-4 h-4" />
+                    <span className="font-mono text-xs">{msg.attachedFile}</span>
+                  </div>
+                )}
                 {msg.content}
               </div>
             </div>
@@ -103,41 +109,79 @@ export default function ChatPanel() {
       {/* Input */}
       <div className="p-3 border-t border-[#ffffff15] bg-[#ffffff02]">
         <div className="flex justify-between items-center mb-2 px-1">
-           <button 
-             onClick={async () => {
-                if (loading) return;
-                const userMessage = { role: 'user', content: 'Por favor analiza mi workflow actual.' };
-                addChatMessage(userMessage);
-                setLoading(true);
-                try {
-                  const compileRes = await compileWorkflow(nodes, edges);
-                  const workflowContext = compileRes.success ? compileRes.md : 'No workflow compiled';
+           <div className="flex items-center gap-2">
+             <select
+               value={selectedWorkflowId}
+               onChange={(e) => setSelectedWorkflowId(e.target.value)}
+               className="bg-[#ffffff0a] border border-[#ffffff15] text-xs text-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500/50"
+             >
+               <option value="current">Workflow Actual</option>
+               {savedWorkflows?.map(wf => (
+                 <option key={wf.id} value={wf.id}>{wf.name}</option>
+               ))}
+             </select>
+             <button 
+               onClick={async () => {
+                  if (loading) return;
                   
-                  const res = await fetch('/api/chat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      prompt: userMessage.content,
-                      workflow: workflowContext,
-                      history: chatMessages.map(m => ({ role: m.role, parts: [{ text: m.content }] }))
-                    })
-                  });
+                  let selectedNodes = nodes;
+                  let selectedEdges = edges;
+                  let workflowName = "Workflow Actual";
 
-                  const data = await res.json();
-                  if (!res.ok) throw new Error(data.error || 'Failed to fetch response');
-                  addChatMessage({ role: 'assistant', content: data.text });
-                } catch (error) {
-                  addChatMessage({ role: 'assistant', content: `Error: ${error.message}` });
-                } finally {
-                  setLoading(false);
-                }
-             }}
-             disabled={loading || !nodes || nodes.length === 0}
-             className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50 disabled:hover:text-blue-400"
-           >
-             <Bot className="w-3 h-3" />
-             Enviar Workflow al Chat
-           </button>
+                  if (selectedWorkflowId !== 'current') {
+                    const wf = savedWorkflows.find(w => w.id === selectedWorkflowId);
+                    if (wf) {
+                      selectedNodes = wf.nodes;
+                      selectedEdges = wf.edges;
+                      workflowName = wf.name;
+                    }
+                  }
+
+                  if (!selectedNodes || selectedNodes.length === 0) {
+                    alert('El workflow seleccionado está vacío');
+                    return;
+                  }
+
+                  const rawData = JSON.stringify({ nodes: selectedNodes, edges: selectedEdges }, null, 2);
+                  const userMessage = { 
+                    role: 'user', 
+                    content: `Por favor analiza este workflow.`,
+                    attachedFile: `${workflowName.replace(/\s+/g, '_')}.json`
+                  };
+                  addChatMessage(userMessage);
+                  setLoading(true);
+                  try {
+                    const compileRes = await compileWorkflow(selectedNodes, selectedEdges);
+                    const workflowContext = compileRes.success ? compileRes.md : 'No workflow compiled';
+                    
+                    const fullWorkflowData = `## Markdown Context\n${workflowContext}\n\n## Archivo Adjunto (Estructura RAW JSON)\n\`\`\`json\n${rawData}\n\`\`\``;
+
+                    const res = await fetch('/api/chat', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        prompt: userMessage.content,
+                        workflow: fullWorkflowData,
+                        history: chatMessages.map(m => ({ role: m.role, parts: [{ text: m.content }] }))
+                      })
+                    });
+
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Failed to fetch response');
+                    addChatMessage({ role: 'assistant', content: data.text });
+                  } catch (error) {
+                    addChatMessage({ role: 'assistant', content: `Error: ${error.message}` });
+                  } finally {
+                    setLoading(false);
+                  }
+               }}
+               disabled={loading}
+               className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50 disabled:hover:text-blue-400"
+             >
+               <FileJson className="w-3 h-3" />
+               Adjuntar y Enviar
+             </button>
+           </div>
         </div>
         <div className="relative">
           <textarea
