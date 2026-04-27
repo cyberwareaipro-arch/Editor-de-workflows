@@ -1,16 +1,18 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
 import { useGraphStore } from '@/stores/useGraphStore';
-import { Download, PlayCircle, Bot, Sparkles, FileJson, X, Code2, AppWindow } from 'lucide-react';
+import { Download, PlayCircle, Bot, Sparkles, FileJson, X, Code2, AppWindow, FolderOpen } from 'lucide-react';
 import { compileWorkflow } from '@/actions/compileWorkflow';
 import AntigravityClient from '@/lib/antigravity';
 import AppGallery from './AppGallery';
+import WorkflowManager from './WorkflowManager';
 
 export default function ExportToolbar() {
   const { nodes, edges, mode, setMode, isChatOpen, setChatOpen, isAntigravityConnected, setAntigravityConnected } = useGraphStore();
   const [loading, setLoading] = useState(false);
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [isGalleryOpen, setGalleryOpen] = useState(false);
+  const [isWorkflowManagerOpen, setWorkflowManagerOpen] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
 
   const syncTimeoutRef = useRef(null);
@@ -174,6 +176,14 @@ export default function ExportToolbar() {
         <div className="w-px h-6 bg-[#ffffff20]"></div>
 
         <button 
+          onClick={() => setWorkflowManagerOpen(true)}
+          className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold text-sm transition-all shadow-lg bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-400"
+        >
+          <FolderOpen className="w-4 h-4" />
+          Workflows
+        </button>
+
+        <button 
           onClick={() => setGalleryOpen(true)}
           className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold text-sm transition-all shadow-lg bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-400"
         >
@@ -245,6 +255,7 @@ export default function ExportToolbar() {
       )}
 
       <AppGallery isOpen={isGalleryOpen} onClose={() => setGalleryOpen(false)} />
+      <WorkflowManager isOpen={isWorkflowManagerOpen} onClose={() => setWorkflowManagerOpen(false)} />
     </>
   );
 }

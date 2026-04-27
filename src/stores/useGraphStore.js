@@ -54,6 +54,7 @@ export const useGraphStore = create(
     (set, get) => ({
       nodes: [],
       edges: [],
+      savedWorkflows: [],
       selectedNodeId: null,
       mode: 'design', // 'design' o 'trace'
       isChatOpen: false,
@@ -65,6 +66,29 @@ export const useGraphStore = create(
       setAntigravityConnected: (isConnected) => set({ isAntigravityConnected: isConnected }),
       addChatMessage: (msg) => set({ chatMessages: [...get().chatMessages, msg] }),
       clearChat: () => set({ chatMessages: [] }),
+
+      saveWorkflow: (name) => {
+        const { nodes, edges, savedWorkflows } = get();
+        const newWorkflow = {
+          id: Date.now().toString(),
+          name: name || `Workflow ${new Date().toLocaleString()}`,
+          nodes,
+          edges,
+          updatedAt: Date.now()
+        };
+        set({ savedWorkflows: [...(savedWorkflows || []), newWorkflow] });
+      },
+      loadWorkflow: (id) => {
+        const { savedWorkflows } = get();
+        const workflow = (savedWorkflows || []).find(w => w.id === id);
+        if (workflow) {
+          set({ nodes: workflow.nodes, edges: workflow.edges });
+        }
+      },
+      deleteWorkflow: (id) => {
+        const { savedWorkflows } = get();
+        set({ savedWorkflows: (savedWorkflows || []).filter(w => w.id !== id) });
+      },
       
       onNodesChange: (changes) => {
         set({
