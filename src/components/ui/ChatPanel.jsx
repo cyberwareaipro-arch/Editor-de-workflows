@@ -17,25 +17,51 @@ export default function ChatPanel() {
   if (!isChatOpen) return null;
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    const finalInput = input.trim();
+    if (!finalInput) return;
 
-    const userMessage = { role: 'user', content: input };
+    let selectedNodes = nodes;
+    let selectedEdges = edges;
+    let workflowName = "Workflow Actual";
+
+    if (selectedWorkflowId !== 'current') {
+      const wf = savedWorkflows.find(w => w.id === selectedWorkflowId);
+      if (wf) {
+        selectedNodes = wf.nodes;
+        selectedEdges = wf.edges;
+        workflowName = wf.name;
+      }
+    }
+
+    if (!selectedNodes || selectedNodes.length === 0) {
+      alert('El workflow seleccionado está vacío');
+      return;
+    }
+
+    const rawData = JSON.stringify({ nodes: selectedNodes, edges: selectedEdges }, null, 2);
+
+    const userMessage = { 
+      role: 'user', 
+      content: finalInput,
+      attachedFile: `${workflowName.replace(/\s+/g, '_')}.json`
+    };
+    
     addChatMessage(userMessage);
     setInput('');
     setLoading(true);
 
     try {
-      // Compilar workflow para dar contexto
-      const compileRes = await compileWorkflow(nodes, edges);
+      const compileRes = await compileWorkflow(selectedNodes, selectedEdges);
       const workflowContext = compileRes.success ? compileRes.md : 'No workflow compiled';
+      
+      const fullWorkflowData = `## Markdown Context\n${workflowContext}\n\n## Archivo Adjunto (Estructura RAW JSON)\n\`\`\`json\n${rawData}\n\`\`\``;
 
-      // Llamar a nuestra API
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: userMessage.content,
-          workflow: workflowContext,
+          workflow: fullWorkflowData,
           history: chatMessages.map(m => ({ role: m.role, parts: [{ text: m.content }] })) // History for Gemini
         })
       });
@@ -110,77 +136,18 @@ export default function ChatPanel() {
       <div className="p-3 border-t border-[#ffffff15] bg-[#ffffff02]">
         <div className="flex justify-between items-center mb-2 px-1">
            <div className="flex items-center gap-2">
+             <FileJson className="w-4 h-4 text-gray-400" />
+             <span className="text-xs text-gray-400 font-medium">Adjuntar:</span>
              <select
                value={selectedWorkflowId}
                onChange={(e) => setSelectedWorkflowId(e.target.value)}
-               className="bg-[#ffffff0a] border border-[#ffffff15] text-xs text-gray-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500/50"
+               className="bg-[#ffffff0a] border border-[#ffffff15] text-xs text-blue-300 rounded px-2 py-1 focus:outline-none focus:border-blue-500/50"
              >
                <option value="current">Workflow Actual</option>
                {savedWorkflows?.map(wf => (
                  <option key={wf.id} value={wf.id}>{wf.name}</option>
                ))}
              </select>
-             <button 
-               onClick={async () => {
-                  if (loading) return;
-                  
-                  let selectedNodes = nodes;
-                  let selectedEdges = edges;
-                  let workflowName = "Workflow Actual";
-
-                  if (selectedWorkflowId !== 'current') {
-                    const wf = savedWorkflows.find(w => w.id === selectedWorkflowId);
-                    if (wf) {
-                      selectedNodes = wf.nodes;
-                      selectedEdges = wf.edges;
-                      workflowName = wf.name;
-                    }
-                  }
-
-                  if (!selectedNodes || selectedNodes.length === 0) {
-                    alert('El workflow seleccionado está vacío');
-                    return;
-                  }
-
-                  const rawData = JSON.stringify({ nodes: selectedNodes, edges: selectedEdges }, null, 2);
-                  const userMessage = { 
-                    role: 'user', 
-                    content: `Por favor analiza este workflow.`,
-                    attachedFile: `${workflowName.replace(/\s+/g, '_')}.json`
-                  };
-                  addChatMessage(userMessage);
-                  setLoading(true);
-                  try {
-                    const compileRes = await compileWorkflow(selectedNodes, selectedEdges);
-                    const workflowContext = compileRes.success ? compileRes.md : 'No workflow compiled';
-                    
-                    const fullWorkflowData = `## Markdown Context\n${workflowContext}\n\n## Archivo Adjunto (Estructura RAW JSON)\n\`\`\`json\n${rawData}\n\`\`\``;
-
-                    const res = await fetch('/api/chat', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        prompt: userMessage.content,
-                        workflow: fullWorkflowData,
-                        history: chatMessages.map(m => ({ role: m.role, parts: [{ text: m.content }] }))
-                      })
-                    });
-
-                    const data = await res.json();
-                    if (!res.ok) throw new Error(data.error || 'Failed to fetch response');
-                    addChatMessage({ role: 'assistant', content: data.text });
-                  } catch (error) {
-                    addChatMessage({ role: 'assistant', content: `Error: ${error.message}` });
-                  } finally {
-                    setLoading(false);
-                  }
-               }}
-               disabled={loading}
-               className="text-xs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1 disabled:opacity-50 disabled:hover:text-blue-400"
-             >
-               <FileJson className="w-3 h-3" />
-               Adjuntar y Enviar
-             </button>
            </div>
         </div>
         <div className="relative">
@@ -193,7 +160,7 @@ export default function ChatPanel() {
                  handleSend();
                }
              }}
-             placeholder="Prompt Gemini..."
+             placeholder="Escribe tu prompt e instrucciones aquí..."
              className="w-full bg-[#ffffff0a] border border-[#ffffff15] rounded-lg pl-3 pr-10 py-2.5 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50 resize-none min-h-[44px] max-h-[120px]"
              rows={1}
           />
