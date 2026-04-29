@@ -1,6 +1,10 @@
 import mongoose from 'mongoose';
 
 const AppFileSchema = new mongoose.Schema({
+  userEmail: {
+    type: String,
+    required: true,
+  },
   nombre: {
     type: String,
     required: true,

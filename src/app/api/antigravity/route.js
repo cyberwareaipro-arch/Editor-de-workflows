@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import dbConnect from '@/lib/mongodb';
+import AppFile from '@/models/AppFile';
 
 export async function POST(request) {
   try {
     const data = await request.json();
-    const { context, Nombre, Extensión, ContentBase64, "Ruta a guardar": RutaAGuardar } = data;
+    const { context, Nombre, Extensión, ContentBase64, "Ruta a guardar": RutaAGuardar, userEmail } = data;
 
     // Si recibimos context, lo guardamos para que Antigravity (IA) lo lea
     if (context) {
@@ -45,6 +47,18 @@ export async function POST(request) {
       // del build en servidores como Render y garantizar que Next.js siempre detecte/sirva el archivo nuevo en disco.
       const encodedUrlPath = `${safePath ? safePath.replace(/\\/g, '/') + '/' : ''}${Nombre}${ext}`;
       const publicUrl = `/api/public/${encodedUrlPath}`;
+
+      if (userEmail) {
+        await dbConnect();
+        await AppFile.create({
+          userEmail,
+          nombre: Nombre,
+          extension: ext,
+          contentBase64: ContentBase64,
+          rutaAGuardar: safePath,
+          publicUrl: publicUrl
+        });
+      }
 
       return NextResponse.json({ 
 

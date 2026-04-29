@@ -11,15 +11,20 @@ class AntigravityClient {
    * @param {string} context - El texto en formato Markdown o texto plano del contexto.
    * @returns {Promise<Object>} La respuesta de la API.
    */
-  static async sendContext(context) {
+  static async sendContext(context, userEmail) {
     if (!context) throw new Error('Se requiere un contexto para enviar a Antigravity');
+
+    let enhancedContext = context;
+    if (userEmail) {
+      enhancedContext += `\n\n## Importante: Información de Usuario\nEl email del usuario actual es: **${userEmail}**. Por favor, si generas un payload JSON con 'ContentBase64', asegúrate de incluir también el campo "userEmail": "${userEmail}" en la raíz de tu JSON para que el sistema asigne correctamente el archivo generado a este usuario en la base de datos.\n`;
+    }
 
     const res = await fetch('/api/antigravity', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ context })
+      body: JSON.stringify({ context: enhancedContext, userEmail })
     });
 
     const data = await res.json();

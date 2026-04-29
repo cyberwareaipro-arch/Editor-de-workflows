@@ -4,12 +4,19 @@ import fs from 'fs';
 import path from 'path';
 import dbConnect from '@/lib/mongodb';
 import AppFile from '@/models/AppFile';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 // Initialize the Gemini API client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export async function POST(request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { prompt, workflow, history } = await request.json();
 
     if (!prompt) {
@@ -34,16 +41,25 @@ Here is the current workflow (compiled to Markdown):
 ${workflow}
 \`\`\`
 
-IMPORTANT: Si el usuario te pide explícitamente crear una aplicación, página web, o código (HTML/CSS/JS), DEBES responder obligatoriamente con un único bloque JSON que siga exactamente esta estructura, escribiendo el código directamente como string en "Content" (escapando comillas dobles y saltos de línea si es necesario):
+IMPORTANT: Si el usuario te pide explícitamente crear una aplicación, página web, o código (HTML/CSS/JS), DEBES responder obligatoriamente con DOS bloques de código separados. 
+
+Primero, un bloque JSON con los metadatos (NUNCA incluyas el código HTML aquí, solo los metadatos):
 \`\`\`json
 {
   "Nombre": "nombre_de_la_app",
   "Extensión": ".html",
-  "Content": "<html>...</html>",
   "Ruta a guardar": "vistas"
 }
 \`\`\`
-Asegúrate de que todo el código sea un monoarchivo (HTML con CSS y JS incrustados). No incluyas otros bloques de código, solo el bloque JSON.
+
+Segundo, un bloque de código HTML que contenga TODO el código de la aplicación (debe ser un monoarchivo con CSS y JS incrustados):
+\`\`\`html
+<!DOCTYPE html>
+<html>
+...
+</html>
+\`\`\`
+Asegúrate de que no haya código fuera de estos bloques.
 
 User's prompt:
 ${prompt}
@@ -63,14 +79,27 @@ ${prompt}
     const result = await chat.sendMessage(contextPrompt);
     let responseText = result.response.text();
 
-    // Check if response contains a JSON block with the specified format
-    const jsonMatch = responseText.match(/```json\s*(\{[\s\S]*?"Nombre"[\s\S]*?"Content"[\s\S]*?\})\s*```/);
-    if (jsonMatch) {
+    // Extraer JSON metadata
+    const jsonMatch = responseText.match(/\`\`\`(?:json)?\s*(\{[\s\S]*?"Nombre"[\s\S]*?\})\s*\`\`\`/i);
+    // Extraer contenido HTML
+    const htmlMatch = responseText.match(/\`\`\`(?:html)?\s*(<!DOCTYPE html>|<html[\s\S]*?)\`\`\`/i) || responseText.match(/\`\`\`(?:html|js|javascript|css)?\s*([\s\S]*?)\`\`\`/i);
+
+    if (jsonMatch && htmlMatch) {
       try {
         const parsedJson = JSON.parse(jsonMatch[1]);
-        const { Nombre, Extensión, Content, "Ruta a guardar": RutaAGuardar } = parsedJson;
+        const { Nombre, Extensión, "Ruta a guardar": RutaAGuardar } = parsedJson;
+        
+        // Excluimos el JSON si el htmlMatch agarró el bloque JSON por error
+        let Content = htmlMatch[1];
+        if (Content.includes('"Nombre":') && Content.includes('"Extensión":')) {
+           // Fallback if the second block wasn't captured correctly
+           const allBlocks = [...responseText.matchAll(/\`\`\`[a-z]*\n([\s\S]*?)\`\`\`/gi)];
+           if (allBlocks.length > 1) {
+             Content = allBlocks[1][1];
+           }
+        }
 
-        if (Nombre && Content) {
+        if (Nombre && Content && !Content.includes('"Nombre":')) {
           // Limpiar ruta
           let safePath = (RutaAGuardar || 'vistas').replace(/^[\/\\]+/, '');
           if (safePath.toLowerCase().startsWith('public')) {
@@ -87,18 +116,19 @@ ${prompt}
           const ext = Extensión && Extensión.startsWith('.') ? Extensión : (Extensión ? `.${Extensión}` : '.html');
           const fullFilePath = path.join(targetPath, `${Nombre}${ext}`);
 
-          // Escribir archivo directamente como utf8 para preservar tildes y caracteres especiales
+          // Escribir archivo directamente como utf8
           fs.writeFileSync(fullFilePath, Content, 'utf8');
 
           const encodedUrlPath = `${safePath ? safePath.replace(/\\/g, '/') + '/' : ''}${Nombre}${ext}`;
           const publicUrl = `/api/public/${encodedUrlPath}`;
 
-          // Codificar a base64 nosotros mismos para guardarlo en la DB
+          // Codificar a base64 para guardarlo en la DB
           const contentBase64 = Buffer.from(Content, 'utf8').toString('base64');
 
           // Guardar en MongoDB
           await dbConnect();
           await AppFile.create({
+            userEmail: session.user.email,
             nombre: Nombre,
             extension: ext,
             contentBase64: contentBase64,
@@ -106,14 +136,11 @@ ${prompt}
             publicUrl: publicUrl
           });
 
-          // Reemplazar el bloque JSON gigante por un mensaje amistoso y un link
-          responseText = responseText.replace(
-            jsonMatch[0], 
-            `\n\n✅ ¡Aplicación generada con éxito!\nPuedes verla aquí: [${Nombre}${ext}](${publicUrl})\nTambién estará disponible en la galería de Apps Generadas.\n`
-          );
+          // Reemplazar los bloques por el link
+          responseText = `✅ ¡Aplicación generada con éxito!\nPuedes verla aquí: [${Nombre}${ext}](${publicUrl})\nTambién estará disponible en la galería de Apps Generadas.`;
         }
       } catch (parseError) {
-        console.error('Error parsing JSON from Gemini:', parseError);
+        console.error('Error parsing response from Gemini:', parseError);
       }
     }
 

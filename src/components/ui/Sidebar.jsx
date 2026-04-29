@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { Bot, Shield, Architecture, Layout, TestTube, CheckCircle, GitBranch, Rocket } from 'lucide-react';
 
 const categoryIcons = {
@@ -14,6 +15,8 @@ const categoryIcons = {
 };
 
 export default function Sidebar({ agents }) {
+  const { data: session } = useSession();
+
   const onDragStart = (event, agent, specificType = 'skillNode') => {
     event.dataTransfer.setData('application/reactflow', specificType);
     event.dataTransfer.setData('application/agent-data', JSON.stringify(agent));
@@ -34,7 +37,24 @@ export default function Sidebar({ agents }) {
         <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
           AI Workflow Editor
         </h1>
-        <p className="text-xs text-gray-400 mt-1">Arrastra skills al lienzo para conectarlos.</p>
+        <p className="text-xs text-gray-400 mt-1 mb-4">Arrastra skills al lienzo para conectarlos.</p>
+        
+        {session ? (
+          <div className="flex items-center justify-between bg-[#ffffff0a] p-2 rounded-lg border border-[#ffffff15]">
+            <div className="flex items-center gap-2">
+              {session.user?.image && <img src={session.user.image} alt="Avatar" className="w-6 h-6 rounded-full" />}
+              <span className="text-xs text-gray-300 truncate max-w-[120px]">{session.user?.email}</span>
+            </div>
+            <button onClick={() => signOut()} className="text-xs text-red-400 hover:text-red-300">Salir</button>
+          </div>
+        ) : (
+          <button 
+            onClick={() => signIn("google")} 
+            className="w-full py-2 bg-white text-black font-semibold text-sm rounded-lg flex items-center justify-center gap-2 hover:bg-gray-200 transition-colors"
+          >
+            Sign in with Google
+          </button>
+        )}
       </div>
 
       <div className="p-4 flex flex-col gap-6">

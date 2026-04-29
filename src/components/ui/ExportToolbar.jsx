@@ -4,10 +4,12 @@ import { useGraphStore } from '@/stores/useGraphStore';
 import { Download, PlayCircle, Bot, Sparkles, FileJson, X, Code2, AppWindow, FolderOpen } from 'lucide-react';
 import { compileWorkflow } from '@/actions/compileWorkflow';
 import AntigravityClient from '@/lib/antigravity';
+import { useSession } from 'next-auth/react';
 import AppGallery from './AppGallery';
 import WorkflowManager from './WorkflowManager';
 
 export default function ExportToolbar() {
+  const { data: session } = useSession();
   const { nodes, edges, mode, setMode, isChatOpen, setChatOpen, isAntigravityConnected, setAntigravityConnected } = useGraphStore();
   const [loading, setLoading] = useState(false);
   const [showJsonModal, setShowJsonModal] = useState(false);
@@ -37,7 +39,7 @@ export default function ExportToolbar() {
 
           const contextText = `# Contexto del Workflow\n\nResumen del flujo actual:\n\n${response.md}\n\n## Estructura RAW:\n\`\`\`json\n${JSON.stringify(rawStructure, null, 2)}\n\`\`\`\n`;
           
-          await AntigravityClient.sendContext(contextText);
+          await AntigravityClient.sendContext(contextText, session?.user?.email);
           console.log('[Antigravity] Context auto-synced.');
         } catch (e) {
           console.warn('[Antigravity] Auto-sync failed:', e.message);
@@ -92,7 +94,7 @@ export default function ExportToolbar() {
       const contextText = `# Contexto del Workflow\n\nResumen del flujo actual:\n\n${md}\n\n## Estructura RAW:\n\`\`\`json\n${JSON.stringify(rawStructure, null, 2)}\n\`\`\`\n`;
 
       // Enviar a la API local a través del nuevo cliente
-      await AntigravityClient.sendContext(contextText);
+      await AntigravityClient.sendContext(contextText, session?.user?.email);
       setAntigravityConnected(true);
     } catch (e) {
       alert("Error linking with Antigravity: " + e.message);

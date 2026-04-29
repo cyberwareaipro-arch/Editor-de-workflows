@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import WorkflowState from '@/models/WorkflowState';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function GET(request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
 
@@ -13,7 +20,7 @@ export async function GET(request) {
 
     await dbConnect();
 
-    const state = await WorkflowState.findOne({ key });
+    const state = await WorkflowState.findOne({ key, userEmail: session.user.email });
     
     return NextResponse.json({ value: state ? state.value : null });
   } catch (error) {
@@ -24,6 +31,11 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { key, value } = await request.json();
 
     if (!key || value === undefined) {
@@ -33,8 +45,8 @@ export async function POST(request) {
     await dbConnect();
 
     await WorkflowState.findOneAndUpdate(
-      { key },
-      { value },
+      { key, userEmail: session.user.email },
+      { value, userEmail: session.user.email },
       { upsert: true, new: true }
     );
 
@@ -47,6 +59,11 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || !session.user || !session.user.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
 
@@ -55,7 +72,7 @@ export async function DELETE(request) {
     }
 
     await dbConnect();
-    await WorkflowState.deleteOne({ key });
+    await WorkflowState.deleteOne({ key, userEmail: session.user.email });
 
     return NextResponse.json({ success: true });
   } catch (error) {
