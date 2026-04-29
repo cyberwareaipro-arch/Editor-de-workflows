@@ -47,7 +47,7 @@ export async function POST(request) {
     await WorkflowState.findOneAndUpdate(
       { key, userEmail: session.user.email },
       { value, userEmail: session.user.email },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     );
 
     return NextResponse.json({ success: true });
