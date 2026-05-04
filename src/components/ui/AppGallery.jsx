@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { X, ExternalLink, AppWindow, Loader2, Trash2 } from 'lucide-react';
+import { X, ExternalLink, AppWindow, Loader2, Trash2, Download } from 'lucide-react';
 
 export default function AppGallery({ isOpen, onClose }) {
   const [apps, setApps] = useState([]);
@@ -44,6 +44,15 @@ export default function AppGallery({ isOpen, onClose }) {
         alert('Hubo un error al intentar eliminar la aplicación.');
       }
     }
+  };
+
+  const handleDownload = (app) => {
+    const link = document.createElement('a');
+    link.href = `data:application/octet-stream;base64,${app.contentBase64}`;
+    link.download = `${app.nombre}${app.extension}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   if (!isOpen) return null;
@@ -91,16 +100,23 @@ export default function AppGallery({ isOpen, onClose }) {
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
-                  <div className="mt-auto pt-2">
+                  <div className="mt-auto pt-2 flex gap-2">
                     <a 
                       href={app.publicUrl} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full py-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 rounded-md transition-colors text-sm font-medium"
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 rounded-md transition-colors text-sm font-medium"
                     >
                       <ExternalLink className="w-4 h-4" />
-                      Abrir Aplicación
+                      Abrir
                     </a>
+                    <button 
+                      onClick={() => handleDownload(app)}
+                      className="flex-1 flex items-center justify-center gap-2 py-2 bg-green-600/20 text-green-400 hover:bg-green-600/30 rounded-md transition-colors text-sm font-medium"
+                    >
+                      <Download className="w-4 h-4" />
+                      Descargar
+                    </button>
                   </div>
                 </div>
               ))}
