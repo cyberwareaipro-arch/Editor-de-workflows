@@ -56,6 +56,37 @@ export default function WorkflowManager({ isOpen, onClose }) {
     }
   };
 
+  const processCustomSkills = async (wfNodes) => {
+    if (!wfNodes || !Array.isArray(wfNodes)) return;
+    
+    // Find custom agents
+    const customAgents = wfNodes
+      .map(n => n.data?.agent)
+      .filter(a => a && !a.isDefault && a.id && a.id.startsWith('custom-'));
+      
+    // Deduplicate by ID
+    const uniqueAgents = Array.from(new Map(customAgents.map(a => [a.id, a])).values());
+
+    for (const agent of uniqueAgents) {
+      try {
+        await fetch('/api/skills', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            customId: agent.id, // Pasamos el customId para que la API sepa que es importado y no duplique o le ponga [Importado]
+            name: agent.name,
+            description: agent.description,
+            category: agent.category,
+            content: agent.content,
+            isShared: false // Se importa como privado
+          }),
+        });
+      } catch (e) {
+        console.error('Error auto-importing skill:', e);
+      }
+    }
+  };
+
   const handleLoad = async (id) => {
     try {
       const res = await fetch(`/api/workflows/${id}`);
@@ -64,6 +95,9 @@ export default function WorkflowManager({ isOpen, onClose }) {
         if (data.workflow) {
           setGraph(data.workflow.nodes, data.workflow.edges);
           onClose();
+          // Import custom skills if any
+          await processCustomSkills(data.workflow.nodes);
+          window.dispatchEvent(new Event('skillsUpdated')); // Para que sidebar se entere
         }
       }
     } catch (error) {
@@ -133,7 +167,7 @@ export default function WorkflowManager({ isOpen, onClose }) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const json = JSON.parse(event.target.result);
         if (json.nodes && json.edges) {
@@ -142,6 +176,9 @@ export default function WorkflowManager({ isOpen, onClose }) {
             setNewWorkflowName(json.name);
           }
           onClose();
+          // Import custom skills if any
+          await processCustomSkills(json.nodes);
+          window.dispatchEvent(new Event('skillsUpdated')); // Para que sidebar se entere
         } else {
           alert('El archivo no tiene el formato correcto de un workflow.');
         }

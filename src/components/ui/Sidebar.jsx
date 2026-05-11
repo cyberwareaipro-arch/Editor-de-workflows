@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { signIn, signOut, useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Bot, Shield, Architecture, Layout, TestTube, CheckCircle, GitBranch, Rocket } from 'lucide-react';
 
 const categoryIcons = {
@@ -16,6 +17,15 @@ const categoryIcons = {
 
 export default function Sidebar({ agents }) {
   const { data: session } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    const handleSkillsUpdated = () => {
+      router.refresh(); // Refresca los server components, incluyendo page.js, por ende actualiza los 'agents'
+    };
+    window.addEventListener('skillsUpdated', handleSkillsUpdated);
+    return () => window.removeEventListener('skillsUpdated', handleSkillsUpdated);
+  }, [router]);
 
   const onDragStart = (event, agent, specificType = 'skillNode') => {
     event.dataTransfer.setData('application/reactflow', specificType);
@@ -23,8 +33,20 @@ export default function Sidebar({ agents }) {
     event.dataTransfer.effectAllowed = 'move';
   };
 
-  // Group agents by category
-  const groupedAgents = agents.reduce((acc, agent) => {
+  // Split custom agents and default agents
+  const customAgents = agents.filter(a => !a.isDefault);
+  const defaultAgents = agents.filter(a => a.isDefault);
+
+  // Group default agents by category
+  const groupedAgents = defaultAgents.reduce((acc, agent) => {
+    const cat = agent.category || 'Other';
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(agent);
+    return acc;
+  }, {});
+
+  // Group custom agents by category
+  const groupedCustomAgents = customAgents.reduce((acc, agent) => {
     const cat = agent.category || 'Other';
     if (!acc[cat]) acc[cat] = [];
     acc[cat].push(agent);
@@ -79,6 +101,56 @@ export default function Sidebar({ agents }) {
               </div>
           </div>
         </div>
+
+        {/* Custom Skills Group */}
+        {customAgents.length > 0 && (
+          <div className="bg-purple-900/10 -mx-4 px-4 py-4 border-y border-purple-500/20">
+            <div className="flex items-center gap-2 mb-4 px-2">
+              <Bot className="w-4 h-4 text-purple-400" />
+              <h2 className="text-sm tracking-widest uppercase font-bold text-purple-300">
+                Custom Skills
+              </h2>
+            </div>
+            
+            <div className="flex flex-col gap-5">
+              {Object.entries(groupedCustomAgents).map(([category, items]) => (
+                <div key={`custom-${category}`}>
+                  <div className="flex items-center gap-2 mb-2 px-2 opacity-80">
+                    {categoryIcons[category] || categoryIcons['Other']}
+                    <h3 className="text-xs tracking-wider uppercase font-semibold text-gray-400">
+                      {category}
+                    </h3>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {items.map((agent) => (
+                      <div
+                        key={agent.id}
+                        draggable
+                        onDragStart={(e) => onDragStart(e, agent)}
+                        className="p-3 rounded-lg bg-[#ffffff08] border border-purple-500/30 hover:bg-[#ffffff15] hover:border-purple-400/60 cursor-grab active:cursor-grabbing transition-all duration-200 group relative overflow-hidden"
+                      >
+                        <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-400 to-fuchsia-500 rounded-l-lg"></div>
+                        <h3 className="text-sm font-medium text-gray-100 group-hover:text-purple-300 transition-colors pl-2">
+                          {agent.name.replace(/-/g, ' ')}
+                        </h3>
+                        <p className="text-xs text-gray-400 mt-1 line-clamp-2 pl-2">
+                          {agent.description}
+                        </p>
+                        {agent.isShared && (
+                          <div className="mt-2 pl-2">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300">
+                              Compartido
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {Object.entries(groupedAgents).map(([category, items]) => (
           <div key={category}>

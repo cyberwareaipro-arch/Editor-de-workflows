@@ -7,6 +7,7 @@ import AntigravityClient from '@/lib/antigravity';
 import { useSession } from 'next-auth/react';
 import AppGallery from './AppGallery';
 import WorkflowManager from './WorkflowManager';
+import SkillManager from './SkillManager';
 
 export default function ExportToolbar() {
   const { data: session } = useSession();
@@ -15,6 +16,7 @@ export default function ExportToolbar() {
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [isGalleryOpen, setGalleryOpen] = useState(false);
   const [isWorkflowManagerOpen, setWorkflowManagerOpen] = useState(false);
+  const [isSkillManagerOpen, setSkillManagerOpen] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
 
   const syncTimeoutRef = useRef(null);
@@ -186,6 +188,14 @@ export default function ExportToolbar() {
         </button>
 
         <button 
+          onClick={() => setSkillManagerOpen(true)}
+          className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold text-sm transition-all shadow-lg bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/30 text-purple-400"
+        >
+          <Bot className="w-4 h-4" />
+          Skills
+        </button>
+
+        <button 
           onClick={() => setGalleryOpen(true)}
           className="flex items-center gap-2 px-4 py-1.5 rounded-lg font-semibold text-sm transition-all shadow-lg bg-blue-600/20 hover:bg-blue-600/40 border border-blue-500/30 text-blue-400"
         >
@@ -258,6 +268,7 @@ export default function ExportToolbar() {
 
       <AppGallery isOpen={isGalleryOpen} onClose={() => setGalleryOpen(false)} />
       <WorkflowManager isOpen={isWorkflowManagerOpen} onClose={() => setWorkflowManagerOpen(false)} />
+      <SkillManager isOpen={isSkillManagerOpen} onClose={() => setSkillManagerOpen(false)} />
     </>
   );
 }
