@@ -1,8 +1,112 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { useGraphStore } from '@/stores/useGraphStore';
-import { Bot, Send, User, X, Loader2, Trash2, FileJson } from 'lucide-react';
+import { Bot, Send, User, X, Loader2, Trash2, FileJson, Check, Edit3, Save } from 'lucide-react';
 import { compileWorkflow } from '@/actions/compileWorkflow';
+
+function SkillDraftEditor({ draft, onSave }) {
+  const [name, setName] = useState(draft.name || '');
+  const [description, setDescription] = useState(draft.description || '');
+  const [category, setCategory] = useState(draft.category || 'Other');
+  const [systemPrompt, setSystemPrompt] = useState(draft.content || '');
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/skills', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          description,
+          category,
+          content: systemPrompt,
+          isShared: false
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al guardar');
+      setSaved(true);
+      if (onSave) onSave(data.skill);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (saved) {
+    return (
+      <div className="mt-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-lg flex items-center gap-2 text-emerald-300">
+        <Check className="w-4 h-4" />
+        <span className="text-sm">¡Skill guardada correctamente!</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 p-4 bg-[#ffffff0a] border border-blue-500/30 rounded-lg flex flex-col gap-3">
+      <div className="font-bold text-blue-300 flex items-center gap-2 mb-1">
+        <Edit3 className="w-4 h-4" />
+        Editor de Skill
+      </div>
+      
+      <div>
+        <label className="text-xs text-gray-400 mb-1 block">Nombre</label>
+        <input 
+          className="w-full bg-[#0f1115] border border-[#ffffff15] rounded px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50"
+          value={name}
+          onChange={e => setName(e.target.value)}
+        />
+      </div>
+
+      <div>
+        <label className="text-xs text-gray-400 mb-1 block">Descripción</label>
+        <input 
+          className="w-full bg-[#0f1115] border border-[#ffffff15] rounded px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+        />
+      </div>
+
+      <div>
+        <label className="text-xs text-gray-400 mb-1 block">Categoría</label>
+        <select 
+          className="w-full bg-[#0f1115] border border-[#ffffff15] rounded px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50"
+          value={category}
+          onChange={e => setCategory(e.target.value)}
+        >
+          <option value="Other">Other</option>
+          <option value="Developer">Developer</option>
+          <option value="Marketing">Marketing</option>
+          <option value="Design">Design</option>
+          <option value="Writing">Writing</option>
+          <option value="Data">Data</option>
+        </select>
+      </div>
+
+      <div>
+        <label className="text-xs text-gray-400 mb-1 block">System Prompt</label>
+        <textarea 
+          className="w-full bg-[#0f1115] border border-[#ffffff15] rounded px-2 py-1.5 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50 min-h-[100px] resize-y"
+          value={systemPrompt}
+          onChange={e => setSystemPrompt(e.target.value)}
+        />
+      </div>
+
+      <button
+        onClick={handleSave}
+        disabled={saving || !name || !description || !systemPrompt}
+        className="mt-2 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:bg-gray-700 text-white py-2 rounded transition-colors text-sm"
+      >
+        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+        {saving ? 'Guardando...' : 'Guardar Skill'}
+      </button>
+    </div>
+  );
+}
 
 export default function ChatPanel() {
   const { isChatOpen, setChatOpen, chatMessages, addChatMessage, clearChat, nodes, edges, savedWorkflows } = useGraphStore();
@@ -69,7 +173,7 @@ export default function ChatPanel() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to fetch response');
 
-      addChatMessage({ role: 'assistant', content: data.text });
+      addChatMessage({ role: 'assistant', content: data.text, skillDraft: data.skillDraft });
     } catch (error) {
       addChatMessage({ role: 'assistant', content: `Error: ${error.message}` });
     } finally {
@@ -115,6 +219,7 @@ export default function ChatPanel() {
                   </div>
                 )}
                 {msg.content}
+                {msg.skillDraft && <SkillDraftEditor draft={msg.skillDraft} />}
               </div>
             </div>
           ))

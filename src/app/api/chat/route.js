@@ -59,7 +59,17 @@ Segundo, un bloque de código HTML que contenga TODO el código de la aplicació
 ...
 </html>
 \`\`\`
-Asegúrate de que no haya código fuera de estos bloques.
+
+IMPORTANTE 2: Si el usuario te pide explícitamente crear una SKILL (o agente/asistente), DEBES responder obligatoriamente con UN SOLO bloque JSON con el siguiente formato exacto:
+\`\`\`json
+{
+  "tipo": "skill",
+  "name": "Nombre de la Skill",
+  "description": "Descripción corta de lo que hace",
+  "systemPrompt": "El prompt de sistema detallado para esta skill..."
+}
+\`\`\`
+Asegúrate de que no haya código fuera de estos bloques requeridos.
 
 User's prompt:
 ${prompt}
@@ -79,14 +89,33 @@ ${prompt}
     const result = await chat.sendMessage(contextPrompt);
     let responseText = result.response.text();
 
-    // Extraer JSON metadata
-    const jsonMatch = responseText.match(/\`\`\`(?:json)?\s*(\{[\s\S]*?"Nombre"[\s\S]*?\})\s*\`\`\`/i);
+    // Extraer JSON metadata para App
+    const jsonMatchApp = responseText.match(/\`\`\`(?:json)?\s*(\{[\s\S]*?"Nombre"[\s\S]*?\})\s*\`\`\`/i);
+    // Extraer JSON metadata para Skill
+    const jsonMatchSkill = responseText.match(/\`\`\`(?:json)?\s*(\{[\s\S]*?"tipo"\s*:\s*"skill"[\s\S]*?\})\s*\`\`\`/i);
     // Extraer contenido HTML
     const htmlMatch = responseText.match(/\`\`\`(?:html)?\s*(<!DOCTYPE html>|<html[\s\S]*?)\`\`\`/i) || responseText.match(/\`\`\`(?:html|js|javascript|css)?\s*([\s\S]*?)\`\`\`/i);
 
-    if (jsonMatch && htmlMatch) {
+    let skillDraft = null;
+
+    if (jsonMatchSkill) {
       try {
-        const parsedJson = JSON.parse(jsonMatch[1]);
+        const parsedSkill = JSON.parse(jsonMatchSkill[1]);
+        if (parsedSkill.name && parsedSkill.description && parsedSkill.systemPrompt) {
+          skillDraft = {
+            name: parsedSkill.name,
+            description: parsedSkill.description,
+            category: 'Other', // Categoria por defecto
+            content: parsedSkill.systemPrompt
+          };
+          responseText = "He generado una propuesta para la nueva Skill. Puedes revisarla, editarla y guardarla a continuación:";
+        }
+      } catch (parseError) {
+        console.error('Error parsing skill JSON from Gemini:', parseError);
+      }
+    } else if (jsonMatchApp && htmlMatch) {
+      try {
+        const parsedJson = JSON.parse(jsonMatchApp[1]);
         const { Nombre, Extensión, "Ruta a guardar": RutaAGuardar } = parsedJson;
         
         // Excluimos el JSON si el htmlMatch agarró el bloque JSON por error
@@ -140,11 +169,11 @@ ${prompt}
           responseText = `✅ ¡Aplicación generada con éxito!\nPuedes verla aquí: [${Nombre}${ext}](${publicUrl})\nTambién estará disponible en la galería de Apps Generadas.`;
         }
       } catch (parseError) {
-        console.error('Error parsing response from Gemini:', parseError);
+        console.error('Error parsing app JSON from Gemini:', parseError);
       }
     }
 
-    return NextResponse.json({ text: responseText });
+    return NextResponse.json({ text: responseText, skillDraft });
   } catch (error) {
     console.error('Error in Gemini API /api/chat:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
