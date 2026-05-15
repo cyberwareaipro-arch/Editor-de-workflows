@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { signIn, signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Bot, Shield, Architecture, Layout, TestTube, CheckCircle, GitBranch, Rocket } from 'lucide-react';
+import { useGraphStore } from '@/stores/useGraphStore';
 
 const categoryIcons = {
   'Security': <Shield className="w-4 h-4 text-purple-400" />,
@@ -18,6 +19,7 @@ const categoryIcons = {
 export default function Sidebar({ agents }) {
   const { data: session } = useSession();
   const router = useRouter();
+  const { isMobileMode, activeMobilePanel, setActiveMobilePanel, addNodeInstantly } = useGraphStore();
 
   useEffect(() => {
     const handleSkillsUpdated = () => {
@@ -28,9 +30,15 @@ export default function Sidebar({ agents }) {
   }, [router]);
 
   const onDragStart = (event, agent, specificType = 'skillNode') => {
+    if (isMobileMode) return;
     event.dataTransfer.setData('application/reactflow', specificType);
     event.dataTransfer.setData('application/agent-data', JSON.stringify(agent));
     event.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleInstantAdd = (agent, specificType = 'skillNode') => {
+    addNodeInstantly(agent, specificType);
+    setActiveMobilePanel('none'); // Close menu automatically as requested
   };
 
   // Split custom agents and default agents
@@ -53,13 +61,26 @@ export default function Sidebar({ agents }) {
     return acc;
   }, {});
 
+  const sidebarClasses = isMobileMode
+    ? `absolute top-0 left-0 h-full w-4/5 max-w-[320px] z-50 transform transition-transform duration-300 ease-in-out border-r border-[#ffffff15] bg-[#0f1115e6] backdrop-blur-xl flex flex-col overflow-y-auto ${activeMobilePanel === 'skills' ? 'translate-x-0' : '-translate-x-full'}`
+    : `w-80 h-full border-r border-[#ffffff15] bg-[var(--panel-bg)] backdrop-blur-xl flex flex-col overflow-y-auto`;
+
   return (
-    <aside className="w-80 h-full border-r border-[#ffffff15] bg-[var(--panel-bg)] backdrop-blur-xl flex flex-col overflow-y-auto">
-      <div className="p-5 border-b border-[#ffffff15]">
-        <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
-          AI Workflow Editor
-        </h1>
-        <p className="text-xs text-gray-400 mt-1 mb-4">Arrastra skills al lienzo para conectarlos.</p>
+    <>
+      {isMobileMode && activeMobilePanel === 'skills' && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 backdrop-blur-sm"
+          onClick={() => setActiveMobilePanel('none')}
+        />
+      )}
+      <aside className={sidebarClasses}>
+        <div className="p-5 border-b border-[#ffffff15]">
+          <h1 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400">
+            AI Workflow Editor
+          </h1>
+          <p className="text-xs text-gray-400 mt-1 mb-4">
+            {isMobileMode ? 'Toca skills para agregarlas al lienzo.' : 'Arrastra skills al lienzo para conectarlos.'}
+          </p>
         
         {session ? (
           <div className="flex items-center justify-between bg-[#ffffff0a] p-2 rounded-lg border border-[#ffffff15]">
@@ -88,9 +109,10 @@ export default function Sidebar({ agents }) {
           </div>
           <div className="flex flex-col gap-2">
               <div
-                  draggable
+                  draggable={!isMobileMode}
                   onDragStart={(e) => onDragStart(e, { id: 'structural-if-else', name: 'If / Else Condition', category: 'Logic' }, 'conditionNode')}
-                  className="p-3 rounded-lg bg-[#ffffff08] border border-amber-500/30 hover:bg-[#ffffff15] hover:border-amber-400/50 cursor-grab active:cursor-grabbing transition-all duration-200 group"
+                  onClick={() => isMobileMode && handleInstantAdd({ id: 'structural-if-else', name: 'If / Else Condition', category: 'Logic' }, 'conditionNode')}
+                  className={`p-3 rounded-lg bg-[#ffffff08] border border-amber-500/30 hover:bg-[#ffffff15] hover:border-amber-400/50 transition-all duration-200 group ${isMobileMode ? 'cursor-pointer' : 'cursor-grab active:cursor-grabbing'}`}
                 >
                   <h3 className="text-sm font-medium text-gray-100 group-hover:text-amber-300 transition-colors">
                     If / Else Condition
@@ -125,9 +147,10 @@ export default function Sidebar({ agents }) {
                     {items.map((agent) => (
                       <div
                         key={agent.id}
-                        draggable
+                        draggable={!isMobileMode}
                         onDragStart={(e) => onDragStart(e, agent)}
-                        className="p-3 rounded-lg bg-[#ffffff08] border border-purple-500/30 hover:bg-[#ffffff15] hover:border-purple-400/60 cursor-grab active:cursor-grabbing transition-all duration-200 group relative overflow-hidden"
+                        onClick={() => isMobileMode && handleInstantAdd(agent)}
+                        className={`p-3 rounded-lg bg-[#ffffff08] border border-purple-500/30 hover:bg-[#ffffff15] hover:border-purple-400/60 transition-all duration-200 group relative overflow-hidden ${isMobileMode ? 'cursor-pointer active:scale-[0.98]' : 'cursor-grab active:cursor-grabbing'}`}
                       >
                         <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-purple-400 to-fuchsia-500 rounded-l-lg"></div>
                         <h3 className="text-sm font-medium text-gray-100 group-hover:text-purple-300 transition-colors pl-2">
@@ -164,9 +187,10 @@ export default function Sidebar({ agents }) {
               {items.map((agent) => (
                 <div
                   key={agent.id}
-                  draggable
+                  draggable={!isMobileMode}
                   onDragStart={(e) => onDragStart(e, agent)}
-                  className="p-3 rounded-lg bg-[#ffffff08] border border-[#ffffff10] hover:bg-[#ffffff15] hover:border-blue-400/50 cursor-grab active:cursor-grabbing transition-all duration-200 group"
+                  onClick={() => isMobileMode && handleInstantAdd(agent)}
+                  className={`p-3 rounded-lg bg-[#ffffff08] border border-[#ffffff10] hover:bg-[#ffffff15] hover:border-blue-400/50 transition-all duration-200 group ${isMobileMode ? 'cursor-pointer active:scale-[0.98]' : 'cursor-grab active:cursor-grabbing'}`}
                 >
                   <h3 className="text-sm font-medium text-gray-100 group-hover:text-blue-300 transition-colors">
                     {agent.name.replace(/-/g, ' ')}
@@ -180,6 +204,7 @@ export default function Sidebar({ agents }) {
           </div>
         ))}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

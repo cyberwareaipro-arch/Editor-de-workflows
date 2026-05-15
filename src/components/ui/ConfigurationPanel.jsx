@@ -3,7 +3,7 @@ import React from 'react';
 import { useGraphStore } from '@/stores/useGraphStore';
 
 export default function ConfigurationPanel() {
-  const { selectedNodeId, nodes, updateNodeData, deleteNode, setSelectedNodeId, mode } = useGraphStore();
+  const { selectedNodeId, nodes, updateNodeData, deleteNode, setSelectedNodeId, mode, isMobileMode } = useGraphStore();
 
   if (!selectedNodeId) return null;
 
@@ -13,8 +13,19 @@ export default function ConfigurationPanel() {
   const agent = node.data?.agent;
   const customPrompt = node.data?.customPrompt || '';
 
+  const panelClasses = isMobileMode
+    ? "w-full h-[80vh] border-t border-[#ffffff15] bg-[#0f1115e6] backdrop-blur-xl flex flex-col bottom-0 absolute z-[70] rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.5)]"
+    : "w-80 h-full border-l border-[#ffffff15] bg-[#0f1115e6] backdrop-blur-xl flex flex-col right-0 absolute z-50";
+
   return (
-    <aside className="w-80 h-full border-l border-[#ffffff15] bg-[#0f1115e6] backdrop-blur-xl flex flex-col right-0 absolute z-50">
+    <>
+      {isMobileMode && (
+        <div 
+          className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+          onClick={() => setSelectedNodeId(null)}
+        />
+      )}
+      <aside className={panelClasses}>
       <div className="p-4 border-b border-[#ffffff15] flex justify-between items-center bg-[#ffffff05]">
         <h2 className="text-sm font-bold tracking-wider uppercase text-gray-300">Node Configuration</h2>
         <button 
@@ -79,6 +90,7 @@ export default function ConfigurationPanel() {
           </div>
         )}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }

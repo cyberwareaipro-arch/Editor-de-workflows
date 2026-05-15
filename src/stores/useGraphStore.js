@@ -59,6 +59,11 @@ export const useGraphStore = create(
       isChatOpen: false,
       chatMessages: [],
       isAntigravityConnected: false,
+      isMobileMode: false,
+      activeMobilePanel: 'none', // 'none', 'skills', 'options'
+      
+      setIsMobileMode: (val) => set({ isMobileMode: val }),
+      setActiveMobilePanel: (val) => set({ activeMobilePanel: val }),
       setSelectedNodeId: (id) => set({ selectedNodeId: id }),
       setMode: (mode) => set({ mode }),
       setChatOpen: (isOpen) => set({ isChatOpen: isOpen }),
@@ -89,6 +94,27 @@ export const useGraphStore = create(
       addNode: (node) => {
         set({
           nodes: [...get().nodes, node],
+        });
+      },
+
+      addNodeInstantly: (agentData, type = 'skillNode') => {
+        const { nodes } = get();
+        // Base center roughly
+        const baseX = window.innerWidth / 2 - 100;
+        const baseY = window.innerHeight / 2 - 50;
+        // Add random offset so they don't stack perfectly
+        const randomOffsetX = Math.floor(Math.random() * 60) - 30;
+        const randomOffsetY = Math.floor(Math.random() * 60) - 30;
+
+        const newNode = {
+          id: `${agentData.id}-${Date.now()}`,
+          type,
+          position: { x: baseX + randomOffsetX, y: baseY + randomOffsetY },
+          data: { agent: agentData },
+        };
+        
+        set({
+          nodes: [...nodes, newNode],
         });
       },
 

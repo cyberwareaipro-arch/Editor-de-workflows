@@ -11,7 +11,7 @@ import SkillManager from './SkillManager';
 
 export default function ExportToolbar() {
   const { data: session } = useSession();
-  const { nodes, edges, mode, setMode, isChatOpen, setChatOpen, isAntigravityConnected, setAntigravityConnected } = useGraphStore();
+  const { nodes, edges, mode, setMode, isChatOpen, setChatOpen, isAntigravityConnected, setAntigravityConnected, isMobileMode, activeMobilePanel } = useGraphStore();
   const [loading, setLoading] = useState(false);
   const [showJsonModal, setShowJsonModal] = useState(false);
   const [isGalleryOpen, setGalleryOpen] = useState(false);
@@ -131,10 +131,20 @@ export default function ExportToolbar() {
     }
   };
 
+  if (isMobileMode && activeMobilePanel !== 'options') return null;
+
+  const toolbarClasses = isMobileMode
+    ? "absolute bottom-24 right-4 z-40 flex flex-col-reverse items-end gap-3 bg-transparent p-0"
+    : "absolute top-4 right-4 z-40 flex items-center gap-4 bg-[#0f1115]/90 p-2 rounded-xl border border-[#ffffff15] backdrop-blur-md";
+
+  const dividerClasses = isMobileMode
+    ? "w-full h-px bg-[#ffffff20] my-1"
+    : "w-px h-6 bg-[#ffffff20]";
+
   return (
     <>
-      <div className="absolute top-4 right-4 z-40 flex items-center gap-4 bg-[#0f1115]/90 p-2 rounded-xl border border-[#ffffff15] backdrop-blur-md">
-        <div className="flex items-center gap-2 bg-[#ffffff0a] p-1 rounded-lg">
+      <div className={toolbarClasses}>
+        <div className={`flex items-center gap-2 bg-[#ffffff0a] p-1 rounded-lg ${isMobileMode ? 'shadow-lg border border-[#ffffff15] bg-[#0f1115]/90 backdrop-blur-md' : ''}`}>
           <button 
              onClick={() => setMode('design')}
              className={`px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded transition-colors ${mode === 'design' ? 'bg-blue-500/20 text-blue-400' : 'text-gray-500 hover:text-gray-300'}`}
@@ -149,7 +159,7 @@ export default function ExportToolbar() {
           </button>
         </div>
         
-        <div className="w-px h-6 bg-[#ffffff20]"></div>
+        <div className={dividerClasses}></div>
 
         <button 
           onClick={() => setShowJsonModal(true)}
@@ -177,7 +187,7 @@ export default function ExportToolbar() {
           {loading ? '...' : isAntigravityConnected ? 'AI Connected' : 'Connect AI'}
         </button>
 
-        <div className="w-px h-6 bg-[#ffffff20]"></div>
+        <div className={dividerClasses}></div>
 
         <button 
           onClick={() => setWorkflowManagerOpen(true)}
