@@ -139,6 +139,9 @@ export const useGraphStore = create(
     {
       name: 'visual-editor-graph-storage',
       storage: createJSONStorage(() => hybridStorage),
+      partialize: (state) => Object.fromEntries(
+        Object.entries(state).filter(([key]) => !['isMobileMode', 'activeMobilePanel'].includes(key))
+      ),
     }
   )
 );

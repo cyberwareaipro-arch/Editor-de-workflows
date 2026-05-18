@@ -109,7 +109,7 @@ function SkillDraftEditor({ draft, onSave }) {
 }
 
 export default function ChatPanel() {
-  const { isChatOpen, setChatOpen, chatMessages, addChatMessage, clearChat, nodes, edges, savedWorkflows } = useGraphStore();
+  const { isChatOpen, setChatOpen, chatMessages, addChatMessage, clearChat, nodes, edges, savedWorkflows, isMobileMode } = useGraphStore();
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedWorkflowId, setSelectedWorkflowId] = useState('current');  const messagesEndRef = useRef(null);
@@ -181,8 +181,14 @@ export default function ChatPanel() {
     }
   };
 
+  const panelClasses = "fixed bottom-0 left-0 w-full h-[85vh] rounded-t-2xl sm:h-auto sm:max-h-[80vh] sm:bottom-auto sm:top-20 sm:right-4 sm:left-auto sm:w-96 bg-[#0f1115]/95 backdrop-blur-xl border-t sm:border border-[#ffffff15] sm:rounded-xl flex flex-col z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] sm:shadow-2xl overflow-hidden";
+
   return (
-    <div className="absolute top-20 right-4 w-96 max-h-[80vh] bg-[#0f1115]/95 backdrop-blur-xl border border-[#ffffff15] rounded-xl flex flex-col z-50 shadow-2xl overflow-hidden">
+    <>
+      {isChatOpen && isMobileMode && (
+        <div className="fixed inset-0 bg-black/60 z-[40] backdrop-blur-sm sm:hidden" onClick={() => setChatOpen(false)} />
+      )}
+      <div className={panelClasses}>
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b border-[#ffffff15] bg-[#ffffff05]">
         <div className="flex items-center gap-2">
@@ -279,5 +285,6 @@ export default function ChatPanel() {
         </div>
       </div>
     </div>
+    </>
   );
 }

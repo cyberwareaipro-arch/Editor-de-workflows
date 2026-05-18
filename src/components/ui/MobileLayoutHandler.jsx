@@ -22,6 +22,13 @@ export default function MobileLayoutHandler() {
     return () => window.removeEventListener('resize', checkMobile);
   }, [setIsMobileMode]);
 
+  // Corrige posibles hidrataciones asíncronas de Zustand que traigan un estado persistido erróneo
+  useEffect(() => {
+    if (mounted && isMobileMode && window.innerWidth >= 1024) {
+      setIsMobileMode(false);
+    }
+  }, [isMobileMode, mounted, setIsMobileMode]);
+
   if (!mounted || !isMobileMode) return null;
 
   const togglePanel = (panel) => {
